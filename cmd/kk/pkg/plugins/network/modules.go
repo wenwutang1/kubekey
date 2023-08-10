@@ -170,19 +170,36 @@ func deployCalico(d *DeployNetworkPluginModule) []task.Interface {
 }
 
 func deployFlannel(d *DeployNetworkPluginModule) []task.Interface {
-	generateFlannel := &task.RemoteTask{
+	generateFlannelPSP := &task.RemoteTask{
 		Name:    "GenerateFlannel",
 		Desc:    "Generate flannel",
 		Hosts:   d.Runtime.GetHostsByRole(common.Master),
 		Prepare: new(common.OnlyFirstMaster),
 		Action: &action.Template{
-			Template: templates.Flannel,
-			Dst:      filepath.Join(common.KubeConfigDir, templates.Flannel.Name()),
+			Template: templates.FlannelPSP,
+			Dst:      filepath.Join(common.KubeConfigDir, templates.FlannelPSP.Name()),
 			Data: util.Data{
-				"KubePodsCIDR": d.KubeConf.Cluster.Network.KubePodsCIDR,
-				"FlannelImage": images.GetImage(d.Runtime, d.KubeConf, "flannel").ImageName(),
+				"KubePodsCIDR":       d.KubeConf.Cluster.Network.KubePodsCIDR,
+				"FlannelImage":       images.GetImage(d.Runtime, d.KubeConf, "flannel").ImageName(),
 				"FlannelPluginImage": images.GetImage(d.Runtime, d.KubeConf, "flannel-cni-plugin").ImageName(),
-				"BackendMode":  d.KubeConf.Cluster.Network.Flannel.BackendMode,
+				"BackendMode":        d.KubeConf.Cluster.Network.Flannel.BackendMode,
+			},
+		},
+		Parallel: true,
+	}
+	generateFlannelPS := &task.RemoteTask{
+		Name:    "GenerateFlannel",
+		Desc:    "Generate flannel",
+		Hosts:   d.Runtime.GetHostsByRole(common.Master),
+		Prepare: new(common.OnlyFirstMaster),
+		Action: &action.Template{
+			Template: templates.FlannelPS,
+			Dst:      filepath.Join(common.KubeConfigDir, templates.FlannelPS.Name()),
+			Data: util.Data{
+				"KubePodsCIDR":       d.KubeConf.Cluster.Network.KubePodsCIDR,
+				"FlannelImage":       images.GetImage(d.Runtime, d.KubeConf, "flannel").ImageName(),
+				"FlannelPluginImage": images.GetImage(d.Runtime, d.KubeConf, "flannel-cni-plugin").ImageName(),
+				"BackendMode":        d.KubeConf.Cluster.Network.Flannel.BackendMode,
 			},
 		},
 		Parallel: true,
@@ -198,9 +215,16 @@ func deployFlannel(d *DeployNetworkPluginModule) []task.Interface {
 		Retry:    5,
 	}
 
-	return []task.Interface{
-		generateFlannel,
-		deploy,
+	if K8sVersionAtLeast(d.KubeConf.Cluster.Kubernetes.Version, "v1.25.0") {
+		return []task.Interface{
+			generateFlannelPS,
+			deploy,
+		}
+	} else {
+		return []task.Interface{
+			generateFlannelPSP,
+			deploy,
+		}
 	}
 }
 
