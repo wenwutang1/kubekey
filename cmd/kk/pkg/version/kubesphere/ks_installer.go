@@ -217,3 +217,23 @@ var KsV332 = &KsInstaller{
 		V321.String(),
 	},
 }
+
+var KsV341 = &KsInstaller{
+	Version:                      V341.String(),
+	CRDTemplate:                  templates.KsInstaller,
+	ClusterConfigurationTemplate: templates.V341,
+	K8sSupportVersions: []string{
+		"v1.21",
+		"v1.22",
+		"v1.23",
+		"v1.24",
+		"v1.25",
+	},
+	UpgradeSupportVersions: []string{
+		V331.String(),
+		V330.String(),
+		V320.String(),
+		V321.String(),
+		V332.String(),
+	},
+}
