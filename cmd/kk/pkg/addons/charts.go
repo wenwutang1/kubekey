@@ -94,6 +94,12 @@ func InstallChart(kubeConf *common.KubeConf, addon *kubekeyapiv1alpha2.Addon, ku
 	client.RepoURL = addon.Sources.Chart.Repo
 	client.Version = addon.Sources.Chart.Version
 	client.Wait = addon.Sources.Chart.Wait
+	client.Username = addon.Sources.Chart.Username
+	client.Password = addon.Sources.Chart.Password
+	client.CaFile = addon.Sources.Chart.CaFile
+	client.CertFile = addon.Sources.Chart.CertFile
+	client.KeyFile = addon.Sources.Chart.KeyFile
+	client.InsecureSkipTLSverify = addon.Sources.Chart.InsecureSkipTLSverify
 	//client.Force = true
 
 	if client.Version == "" && client.Devel {

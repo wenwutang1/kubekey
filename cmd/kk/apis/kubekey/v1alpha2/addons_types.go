@@ -30,13 +30,19 @@ type Sources struct {
 }
 
 type Chart struct {
-	Name       string   `yaml:"name" json:"name,omitempty"`
-	Repo       string   `yaml:"repo" json:"repo,omitempty"`
-	Path       string   `yaml:"path" json:"path,omitempty"`
-	Version    string   `yaml:"version" json:"version,omitempty"`
-	ValuesFile string   `yaml:"valuesFile" json:"valuesFile,omitempty"`
-	Values     []string `yaml:"values" json:"values,omitempty"`
-	Wait       bool     `yaml:"wait" json:"wait,omitempty"`
+	Name                  string   `yaml:"name" json:"name,omitempty"`
+	Repo                  string   `yaml:"repo" json:"repo,omitempty"`
+	Path                  string   `yaml:"path" json:"path,omitempty"`
+	Version               string   `yaml:"version" json:"version,omitempty"`
+	ValuesFile            string   `yaml:"valuesFile" json:"valuesFile,omitempty"`
+	Values                []string `yaml:"values" json:"values,omitempty"`
+	Wait                  bool     `yaml:"wait" json:"wait,omitempty"`
+	CaFile                string   `yaml:"caFile" json:"caFile"`
+	CertFile              string   `yaml:"certFile" json:"certFile"`
+	KeyFile               string   `yaml:"keyFile" json:"keyFile"`
+	InsecureSkipTLSverify bool     `yaml:"insecureSkipTLSverify" json:"insecureSkipTLSverify"`
+	Password              string   `yaml:"password" json:"password"`
+	Username              string   `yaml:"username" json:"username"`
 }
 
 type Yaml struct {
