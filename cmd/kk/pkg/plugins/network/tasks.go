@@ -26,9 +26,11 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/kubesphere/kubekey/v3/cmd/kk/apis/kubekey/v1alpha2"
+	"github.com/kubesphere/kubekey/v3/cmd/kk/pkg/utils"
+
 	"github.com/pkg/errors"
 
-	"github.com/kubesphere/kubekey/v3/cmd/kk/apis/kubekey/v1alpha2"
 	"github.com/kubesphere/kubekey/v3/cmd/kk/pkg/common"
 	"github.com/kubesphere/kubekey/v3/cmd/kk/pkg/core/action"
 	"github.com/kubesphere/kubekey/v3/cmd/kk/pkg/core/connector"
@@ -37,7 +39,7 @@ import (
 	"github.com/kubesphere/kubekey/v3/cmd/kk/pkg/plugins/network/templates"
 )
 
-//go:embed cilium-1.11.7.tgz hybridnet-0.6.6.tgz templates/calico.tmpl
+//go:embed cilium-1.15.3.tgz hybridnet-0.6.6.tgz templates/calico.tmpl
 
 var f embed.FS
 
@@ -50,7 +52,7 @@ func (r *ReleaseCiliumChart) Execute(runtime connector.Runtime) error {
 	if err != nil {
 		return err
 	}
-	chartFile, err := f.Open("cilium-1.11.7.tgz")
+	chartFile, err := f.Open(fmt.Sprintf("cilium-%s.tgz", strings.TrimPrefix(v1alpha2.DefaultCiliumVersion, "v")))
 	if err != nil {
 		return err
 	}
@@ -92,7 +94,7 @@ func (d *DeployCilium) Execute(runtime connector.Runtime) error {
 		"--set operator.image.override=%s "+
 		"--set operator.replicas=1 "+
 		"--set image.override=%s "+
-		"--set ipam.operator.clusterPoolIPv4PodCIDR=%s", ciliumOperatorImage, ciliumImage, d.KubeConf.Cluster.Network.KubePodsCIDR)
+		"--set \"ipam.operator.clusterPoolIPv4PodCIDRList={%s}\"", ciliumOperatorImage, ciliumImage, d.KubeConf.Cluster.Network.KubePodsCIDR)
 
 	if d.KubeConf.Cluster.Kubernetes.DisableKubeProxy {
 		cmd = fmt.Sprintf("%s --set kubeProxyReplacement=strict --set k8sServiceHost=%s --set k8sServicePort=%d", cmd, d.KubeConf.Cluster.ControlPlaneEndpoint.Address, d.KubeConf.Cluster.ControlPlaneEndpoint.Port)
@@ -437,7 +439,7 @@ func (g *GenerateCalicoManifests) Execute(runtime connector.Runtime) error {
 	if err != nil {
 		return err
 	}
-	calico := template.Must(template.New("network-plugin.yaml").Parse(string(calicoContent)))
+	calico := template.Must(template.New("network-plugin.yaml").Funcs(utils.FuncMap).Parse(string(calicoContent)))
 
 	IPv6Support := false
 	kubePodsV6CIDR := ""
@@ -467,6 +469,8 @@ func (g *GenerateCalicoManifests) Execute(runtime connector.Runtime) error {
 			"IPV4POOLNATOUTGOING":     g.KubeConf.Cluster.Network.Calico.EnableIPV4POOL_NAT_OUTGOING(),
 			"DefaultIPPOOL":           g.KubeConf.Cluster.Network.Calico.EnableDefaultIPPOOL(),
 			"IPv6Support":             IPv6Support,
+			"Replicas":                g.KubeConf.Cluster.Network.Calico.Replicas,
+			"NodeSelector":            g.KubeConf.Cluster.Network.Calico.NodeSelector,
 		},
 	}
 	templateAction.Init(nil, nil)
